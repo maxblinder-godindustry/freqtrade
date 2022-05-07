@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 import arrow
 import numpy as np
 import pytest
-from pandas import DataFrame, to_datetime
+from pandas import DataFrame
 
 from freqtrade.data.converter import ohlcv_to_dataframe
 from freqtrade.edge import Edge, PairInfo
@@ -29,49 +29,6 @@ from tests.optimize import (BTContainer, BTrade, _build_backtest_dataframe,
 
 tests_start_time = arrow.get(2018, 10, 3)
 timeframe_in_minute = 60
-
-# Helpers for this test file
-
-
-def _validate_ohlc(buy_ohlc_sell_matrice):
-    for index, ohlc in enumerate(buy_ohlc_sell_matrice):
-        # if not high < open < low or not high < close < low
-        if not ohlc[3] >= ohlc[2] >= ohlc[4] or not ohlc[3] >= ohlc[5] >= ohlc[4]:
-            raise Exception('Line ' + str(index + 1) + ' of ohlc has invalid values!')
-    return True
-
-
-def _build_dataframe(buy_ohlc_sell_matrice):
-    _validate_ohlc(buy_ohlc_sell_matrice)
-    data = []
-    for ohlc in buy_ohlc_sell_matrice:
-        d = {
-            'date': tests_start_time.shift(
-                minutes=(
-                    ohlc[0] *
-                    timeframe_in_minute)).int_timestamp *
-            1000,
-            'buy': ohlc[1],
-            'open': ohlc[2],
-            'high': ohlc[3],
-            'low': ohlc[4],
-            'close': ohlc[5],
-            'sell': ohlc[6]}
-        data.append(d)
-
-    frame = DataFrame(data)
-    frame['date'] = to_datetime(frame['date'],
-                                unit='ms',
-                                utc=True,
-                                infer_datetime_format=True)
-
-    return frame
-
-
-def _time_on_candle(number):
-    return np.datetime64(tests_start_time.shift(
-        minutes=(number * timeframe_in_minute)).int_timestamp * 1000, 'ms')
-
 
 # End helper functions
 # Open trade should be removed from the end
@@ -95,8 +52,8 @@ tc1 = BTContainer(data=[
     [6, 5000, 5025, 4975, 4987, 6172, 0, 0],  # should sell
 ],
     stop_loss=-0.99, roi={"0": float('inf')}, profit_perc=0.00,
-    trades=[BTrade(exit_reason=ExitType.SELL_SIGNAL, open_tick=1, close_tick=2),
-            BTrade(exit_reason=ExitType.SELL_SIGNAL, open_tick=4, close_tick=6)]
+    trades=[BTrade(exit_reason=ExitType.EXIT_SIGNAL, open_tick=1, close_tick=2),
+            BTrade(exit_reason=ExitType.EXIT_SIGNAL, open_tick=4, close_tick=6)]
 )
 
 # 3) Entered, sl 1%, candle drops 8% => Trade closed, 1% loss
@@ -391,7 +348,7 @@ def test_process_expectancy(mocker, edge_conf, fee, risk_reward_ratio, expectanc
          'trade_duration': '',
          'open_rate': 17,
          'close_rate': 17,
-         'exit_type': 'sell_signal'},
+         'exit_type': 'exit_signal'},
 
         {'pair': 'TEST/BTC',
          'stoploss': -0.9,
@@ -402,7 +359,7 @@ def test_process_expectancy(mocker, edge_conf, fee, risk_reward_ratio, expectanc
          'trade_duration': '',
          'open_rate': 20,
          'close_rate': 20,
-         'exit_type': 'sell_signal'},
+         'exit_type': 'exit_signal'},
 
         {'pair': 'TEST/BTC',
          'stoploss': -0.9,
@@ -413,7 +370,7 @@ def test_process_expectancy(mocker, edge_conf, fee, risk_reward_ratio, expectanc
          'trade_duration': '',
          'open_rate': 26,
          'close_rate': 34,
-         'exit_type': 'sell_signal'}
+         'exit_type': 'exit_signal'}
     ]
 
     trades_df = DataFrame(trades)

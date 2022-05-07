@@ -231,6 +231,10 @@ def test_validate_order_time_in_force(default_conf, mocker, caplog):
     (2.34559, 2, 3, 1, 2.345, 'spot'),
     (2.9999, 2, 3, 1, 2.999, 'spot'),
     (2.9909, 2, 3, 1, 2.990, 'spot'),
+    (2.9909, 2, 0, 1, 2, 'spot'),
+    (29991.5555, 2, 0, 1, 29991, 'spot'),
+    (29991.5555, 2, -1, 1, 29990, 'spot'),
+    (29991.5555, 2, -2, 1, 29900, 'spot'),
     # Tests for Tick-size
     (2.34559, 4, 0.0001, 1, 2.3455, 'spot'),
     (2.34559, 4, 0.00001, 1, 2.34559, 'spot'),
@@ -382,11 +386,11 @@ def test__get_stake_amount_limit(mocker, default_conf) -> None:
     )
     # min
     result = exchange.get_min_pair_stake_amount('ETH/BTC', 1, stoploss)
-    expected_result = 2 * (1+0.05) / (1-abs(stoploss))
+    expected_result = 2 * (1 + 0.05) / (1 - abs(stoploss))
     assert isclose(result, expected_result)
     # With Leverage
     result = exchange.get_min_pair_stake_amount('ETH/BTC', 1, stoploss, 3.0)
-    assert isclose(result, expected_result/3)
+    assert isclose(result, expected_result / 3)
     # max
     result = exchange.get_max_pair_stake_amount('ETH/BTC', 2)
     assert result == 10000
@@ -401,11 +405,11 @@ def test__get_stake_amount_limit(mocker, default_conf) -> None:
         PropertyMock(return_value=markets)
     )
     result = exchange.get_min_pair_stake_amount('ETH/BTC', 2, stoploss)
-    expected_result = 2 * 2 * (1+0.05) / (1-abs(stoploss))
+    expected_result = 2 * 2 * (1 + 0.05) / (1 - abs(stoploss))
     assert isclose(result, expected_result)
     # With Leverage
     result = exchange.get_min_pair_stake_amount('ETH/BTC', 2, stoploss, 5.0)
-    assert isclose(result, expected_result/5)
+    assert isclose(result, expected_result / 5)
     # max
     result = exchange.get_max_pair_stake_amount('ETH/BTC', 2)
     assert result == 20000
@@ -420,11 +424,11 @@ def test__get_stake_amount_limit(mocker, default_conf) -> None:
         PropertyMock(return_value=markets)
     )
     result = exchange.get_min_pair_stake_amount('ETH/BTC', 2, stoploss)
-    expected_result = max(2, 2 * 2) * (1+0.05) / (1-abs(stoploss))
+    expected_result = max(2, 2 * 2) * (1 + 0.05) / (1 - abs(stoploss))
     assert isclose(result, expected_result)
     # With Leverage
     result = exchange.get_min_pair_stake_amount('ETH/BTC', 2, stoploss, 10)
-    assert isclose(result, expected_result/10)
+    assert isclose(result, expected_result / 10)
 
     # min amount and cost are set (amount is minial)
     markets["ETH/BTC"]["limits"] = {
@@ -436,11 +440,11 @@ def test__get_stake_amount_limit(mocker, default_conf) -> None:
         PropertyMock(return_value=markets)
     )
     result = exchange.get_min_pair_stake_amount('ETH/BTC', 2, stoploss)
-    expected_result = max(8, 2 * 2) * (1+0.05) / (1-abs(stoploss))
+    expected_result = max(8, 2 * 2) * (1 + 0.05) / (1 - abs(stoploss))
     assert isclose(result, expected_result)
     # With Leverage
     result = exchange.get_min_pair_stake_amount('ETH/BTC', 2, stoploss, 7.0)
-    assert isclose(result, expected_result/7.0)
+    assert isclose(result, expected_result / 7.0)
     # Max
     result = exchange.get_max_pair_stake_amount('ETH/BTC', 2)
     assert result == 1000
@@ -450,7 +454,7 @@ def test__get_stake_amount_limit(mocker, default_conf) -> None:
     assert isclose(result, expected_result)
     # With Leverage
     result = exchange.get_min_pair_stake_amount('ETH/BTC', 2, -0.4, 8.0)
-    assert isclose(result, expected_result/8.0)
+    assert isclose(result, expected_result / 8.0)
     # Max
     result = exchange.get_max_pair_stake_amount('ETH/BTC', 2)
     assert result == 1000
@@ -461,7 +465,7 @@ def test__get_stake_amount_limit(mocker, default_conf) -> None:
     assert isclose(result, expected_result)
     # With Leverage
     result = exchange.get_min_pair_stake_amount('ETH/BTC', 2, -1, 12.0)
-    assert isclose(result, expected_result/12)
+    assert isclose(result, expected_result / 12)
     # Max
     result = exchange.get_max_pair_stake_amount('ETH/BTC', 2)
     assert result == 1000
@@ -489,7 +493,7 @@ def test__get_stake_amount_limit(mocker, default_conf) -> None:
     )
     # With Leverage, Contract size 10
     result = exchange.get_min_pair_stake_amount('ETH/BTC', 2, -1, 12.0)
-    assert isclose(result, (expected_result/12) * 10.0)
+    assert isclose(result, (expected_result / 12) * 10.0)
     # Max
     result = exchange.get_max_pair_stake_amount('ETH/BTC', 2)
     assert result == 10000
@@ -510,7 +514,7 @@ def test_get_min_pair_stake_amount_real_data(mocker, default_conf) -> None:
         PropertyMock(return_value=markets)
     )
     result = exchange.get_min_pair_stake_amount('ETH/BTC', 0.020405, stoploss)
-    expected_result = max(0.0001, 0.001 * 0.020405) * (1+0.05) / (1-abs(stoploss))
+    expected_result = max(0.0001, 0.001 * 0.020405) * (1 + 0.05) / (1 - abs(stoploss))
     assert round(result, 8) == round(expected_result, 8)
     # Max
     result = exchange.get_max_pair_stake_amount('ETH/BTC', 2.0)
@@ -518,12 +522,12 @@ def test_get_min_pair_stake_amount_real_data(mocker, default_conf) -> None:
 
     # Leverage
     result = exchange.get_min_pair_stake_amount('ETH/BTC', 0.020405, stoploss, 3.0)
-    assert round(result, 8) == round(expected_result/3, 8)
+    assert round(result, 8) == round(expected_result / 3, 8)
 
     # Contract_size
     markets["ETH/BTC"]["contractSize"] = 0.1
     result = exchange.get_min_pair_stake_amount('ETH/BTC', 0.020405, stoploss, 3.0)
-    assert round(result, 8) == round((expected_result/3), 8)
+    assert round(result, 8) == round((expected_result / 3), 8)
 
     # Max
     result = exchange.get_max_pair_stake_amount('ETH/BTC', 12.0)
@@ -905,7 +909,7 @@ def test_validate_timeframes_emulated_ohlcv_1(default_conf, mocker):
     mocker.patch('freqtrade.exchange.Exchange.validate_stakecurrency')
     with pytest.raises(OperationalException,
                        match=r'The ccxt library does not provide the list of timeframes '
-                             r'for the exchange ".*" and this exchange '
+                             r'for the exchange .* and this exchange '
                              r'is therefore not supported. *'):
         Exchange(default_conf)
 
@@ -926,7 +930,7 @@ def test_validate_timeframes_emulated_ohlcvi_2(default_conf, mocker):
     mocker.patch('freqtrade.exchange.Exchange.validate_stakecurrency')
     with pytest.raises(OperationalException,
                        match=r'The ccxt library does not provide the list of timeframes '
-                             r'for the exchange ".*" and this exchange '
+                             r'for the exchange .* and this exchange '
                              r'is therefore not supported. *'):
         Exchange(default_conf)
 
@@ -1979,6 +1983,20 @@ async def test__async_get_historic_ohlcv(default_conf, mocker, caplog, exchange_
     assert exchange._api_async.fetch_ohlcv.call_count > 200
     assert res[0] == ohlcv[0]
 
+    exchange._api_async.fetch_ohlcv.reset_mock()
+    end_ts = 1_500_500_000_000
+    start_ts = 1_500_000_000_000
+    respair, restf, _, res = await exchange._async_get_historic_ohlcv(
+        pair, "5m", since_ms=start_ts, candle_type=candle_type, is_new_pair=False,
+        until_ms=end_ts
+        )
+    # Required candles
+    candles = (end_ts - start_ts) / 300_000
+    exp = candles // exchange.ohlcv_candle_limit('5m') + 1
+
+    # Depending on the exchange, this should be called between 1 and 6 times.
+    assert exchange._api_async.fetch_ohlcv.call_count == exp
+
 
 @pytest.mark.parametrize('candle_type', [CandleType.FUTURES, CandleType.MARK, CandleType.SPOT])
 def test_refresh_latest_ohlcv(mocker, default_conf, caplog, candle_type) -> None:
@@ -2691,9 +2709,10 @@ async def test__async_get_trade_history_time(default_conf, mocker, caplog, excha
     # Monkey-patch async function
     exchange._api_async.fetch_trades = MagicMock(side_effect=mock_get_trade_hist)
     pair = 'ETH/BTC'
-    ret = await exchange._async_get_trade_history_time(pair,
-                                                       since=fetch_trades_result[0]['timestamp'],
-                                                       until=fetch_trades_result[-1]['timestamp']-1)
+    ret = await exchange._async_get_trade_history_time(
+        pair,
+        since=fetch_trades_result[0]['timestamp'],
+        until=fetch_trades_result[-1]['timestamp'] - 1)
     assert type(ret) is tuple
     assert ret[0] == pair
     assert type(ret[1]) is list
@@ -2729,7 +2748,7 @@ async def test__async_get_trade_history_time_empty(default_conf, mocker, caplog,
     exchange._async_fetch_trades = MagicMock(side_effect=mock_get_trade_hist)
     pair = 'ETH/BTC'
     ret = await exchange._async_get_trade_history_time(pair, since=trades_history[0][0],
-                                                       until=trades_history[-1][0]-1)
+                                                       until=trades_history[-1][0] - 1)
     assert type(ret) is tuple
     assert ret[0] == pair
     assert type(ret[1]) is list
@@ -4146,7 +4165,10 @@ def test__order_contracts_to_amount(
             'cost': 60.0,
             'filled': None,
             'remaining': 30.0,
-            'fee': 0.06,
+            'fee': {
+                'currency': 'USDT',
+                'cost': 0.06,
+            },
             'fees': [{
                 'currency': 'USDT',
                 'cost': 0.06,
@@ -4173,7 +4195,10 @@ def test__order_contracts_to_amount(
             'cost': 80.0,
             'filled': None,
             'remaining': 40.0,
-            'fee': 0.08,
+            'fee': {
+                'currency': 'USDT',
+                'cost': 0.08,
+            },
             'fees': [{
                 'currency': 'USDT',
                 'cost': 0.08,
@@ -4207,12 +4232,18 @@ def test__order_contracts_to_amount(
             'info': {},
         },
     ]
+    order1_bef = orders[0]
+    order2_bef = orders[1]
+    order1 = exchange._order_contracts_to_amount(deepcopy(order1_bef))
+    order2 = exchange._order_contracts_to_amount(deepcopy(order2_bef))
+    assert order1['amount'] == order1_bef['amount'] * contract_size
+    assert order1['cost'] == order1_bef['cost'] * contract_size
 
-    order1 = exchange._order_contracts_to_amount(orders[0])
-    order2 = exchange._order_contracts_to_amount(orders[1])
+    assert order2['amount'] == order2_bef['amount'] * contract_size
+    assert order2['cost'] == order2_bef['cost'] * contract_size
+
+    # Don't fail
     exchange._order_contracts_to_amount(orders[2])
-    assert order1['amount'] == 30.0 * contract_size
-    assert order2['amount'] == 40.0 * contract_size
 
 
 @pytest.mark.parametrize('pair,contract_size,trading_mode', [
@@ -4502,8 +4533,8 @@ def test_load_leverage_tiers(mocker, default_conf, leverage_tiers, exchange_name
         'ADA/USDT:USDT': [
             {
                 'tier': 1,
-                'notionalFloor': 0,
-                'notionalCap': 500,
+                'minNotional': 0,
+                'maxNotional': 500,
                 'maintenanceMarginRate': 0.02,
                 'maxLeverage': 75,
                 'info': {
@@ -4543,8 +4574,8 @@ def test_load_leverage_tiers(mocker, default_conf, leverage_tiers, exchange_name
         'ADA/USDT:USDT': [
             {
                 'tier': 1,
-                'notionalFloor': 0,
-                'notionalCap': 500,
+                'minNotional': 0,
+                'maxNotional': 500,
                 'maintenanceMarginRate': 0.02,
                 'maxLeverage': 75,
                 'info': {
@@ -4579,15 +4610,15 @@ def test_parse_leverage_tier(mocker, default_conf):
 
     tier = {
         "tier": 1,
-        "notionalFloor": 0,
-        "notionalCap": 100000,
+        "minNotional": 0,
+        "maxNotional": 100000,
         "maintenanceMarginRate": 0.025,
         "maxLeverage": 20,
         "info": {
             "bracket": "1",
             "initialLeverage": "20",
-            "notionalCap": "100000",
-            "notionalFloor": "0",
+            "maxNotional": "100000",
+            "minNotional": "0",
             "maintMarginRatio": "0.025",
             "cum": "0.0"
         }
@@ -4603,8 +4634,8 @@ def test_parse_leverage_tier(mocker, default_conf):
 
     tier2 = {
         'tier': 1,
-        'notionalFloor': 0,
-        'notionalCap': 2000,
+        'minNotional': 0,
+        'maxNotional': 2000,
         'maintenanceMarginRate': 0.01,
         'maxLeverage': 75,
         'info': {
